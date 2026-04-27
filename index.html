@@ -9598,7 +9598,16 @@ document.getElementById('importStudentsModal')?.addEventListener('click',functio
       input.value='';
     } catch(err) {
       console.error('Storage upload error:', err);
-      toast('❌ فشل الرفع: ' + (err.message||err), 'error');
+      var msg = err.message || String(err);
+      if(msg.includes('storage/unauthorized') || msg.includes('permission') || msg.includes('403')){
+        toast('❌ فشل الرفع: تحقق من Storage Rules في Firebase Console', 'error');
+      } else if(msg.includes('storage/unknown') || msg.includes('network')){
+        toast('❌ فشل الرفع: مشكلة في الاتصال بالإنترنت', 'error');
+      } else if(msg.includes('storage/object-not-found') || msg.includes('bucket')){
+        toast('❌ Firebase Storage غير مفعّل — فعّله من Firebase Console أولاً', 'error');
+      } else {
+        toast('❌ فشل الرفع: ' + msg, 'error');
+      }
       input.value='';
     }
   };
@@ -12558,5 +12567,3 @@ document.addEventListener('DOMContentLoaded', ()=>{
 </script>
 </body>
 </html>
-
-          
