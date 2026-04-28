@@ -9536,8 +9536,24 @@ document.getElementById('importStudentsModal')?.addEventListener('click',functio
 (function(){
   var CB_KEY = 'bs_cloudbag_items';
 
-  function getItems(){ try{ return DB.getJSON(CB_KEY, []); }catch(e){ return []; } }
-  function saveItems(arr){ try{ DB.setJSON(CB_KEY, arr); }catch(e){} }
+  function getItems(){
+    try{
+      // نقرأ من Firestore cache أولاً لو موجود
+      if(window._fsCache && window._fsCache[CB_KEY] !== undefined){
+        var v = window._fsCache[CB_KEY];
+        try{ return JSON.parse(v); }catch(e){ return []; }
+      }
+      return DB.getJSON(CB_KEY, []);
+    }catch(e){ return []; }
+  }
+  function saveItems(arr){
+    try{
+      var json = JSON.stringify(arr);
+      // نحدّث الكاش مباشرة
+      if(window._fsCache) window._fsCache[CB_KEY] = json;
+      DB.setJSON(CB_KEY, arr);
+    }catch(e){}
+  }
   function genId(){ return 'cb_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
 
   var currentCat = 'الكل';
@@ -9678,7 +9694,13 @@ document.getElementById('importStudentsModal')?.addEventListener('click',functio
     if(!item) return;
     var url = item.downloadUrl || item.dataUrl;
     if(!url) return;
-    window.open(url, '_blank');
+    var isPdf = (item.title||'').toLowerCase().endsWith('.pdf');
+    if(isPdf){
+      // نفتح PDF عبر Google Docs Viewer عشان يتجنب مشكلة الـ 401
+      window.open('https://docs.google.com/viewer?url=' + encodeURIComponent(url), '_blank');
+    } else {
+      window.open(url, '_blank');
+    }
   };
 
   // ── تنزيل الملف ──
@@ -9687,6 +9709,7 @@ document.getElementById('importStudentsModal')?.addEventListener('click',functio
     if(!item) return;
     var url = item.downloadUrl || item.dataUrl;
     if(!url) return;
+    // للتنزيل نفتح الرابط مباشرة
     var a = document.createElement('a');
     a.href = url; a.download = item.title; a.target = '_blank'; a.click();
   };
@@ -12529,7 +12552,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 })();
 
 // ════════════════════════════════════════════════════════
-//  KEYBOARD SHORTCUTS
+// ⑥ KEYBOARD SHORTCUTS
 //    Ctrl+K → البحث العالمي
 //    Ctrl+N → إضافة سجل جديد حسب الصفحة الحالية
 //    Escape → إغلاق أي modal مفتوح
