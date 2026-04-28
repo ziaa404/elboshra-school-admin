@@ -5,6 +5,62 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>لوحة الإدارة — مدارس البشرى</title>
+<meta name="description" content="لوحة إدارة مدارس البشرى — الإرشاد الطلابي">
+<meta name="theme-color" content="#1565c0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="البشرى">
+
+<!-- PWA Manifest (inline via blob) -->
+<script>
+(function(){
+  var manifest = {
+    name: 'لوحة الإدارة — مدارس البشرى',
+    short_name: 'البشرى',
+    description: 'لوحة إدارة الإرشاد الطلابي',
+    start_url: window.location.href,
+    display: 'standalone',
+    background_color: '#c8d8ff',
+    theme_color: '#1565c0',
+    lang: 'ar',
+    dir: 'rtl',
+    orientation: 'any',
+    icons: [
+      { src: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="40" fill="#1565c0"/><text x="96" y="130" font-size="110" text-anchor="middle" fill="white">🏫</text></svg>'), sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
+      { src: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="100" fill="#1565c0"/><text x="256" y="340" font-size="280" text-anchor="middle" fill="white">🏫</text></svg>'), sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+    ]
+  };
+  var blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+  var url  = URL.createObjectURL(blob);
+  var link = document.createElement('link');
+  link.rel  = 'manifest';
+  link.href = url;
+  document.head.appendChild(link);
+})();
+</script>
+
+<!-- Service Worker (inline) -->
+<script>
+if('serviceWorker' in navigator){
+  var swCode = [
+    "const CACHE='bushra-v1';",
+    "const ASSETS=[];",
+    "self.addEventListener('install',e=>{ self.skipWaiting(); });",
+    "self.addEventListener('activate',e=>{ e.waitUntil(clients.claim()); });",
+    "self.addEventListener('fetch',e=>{ e.respondWith(fetch(e.request).catch(()=>caches.match(e.request))); });"
+  ].join('\n');
+  var swBlob = new Blob([swCode], {type:'application/javascript'});
+  var swUrl  = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl, {scope: './'})
+    .then(function(reg){
+      console.log('[PWA] Service Worker registered', reg.scope);
+      window._swRegistered = true;
+    })
+    .catch(function(err){ console.warn('[PWA] SW registration failed:', err); });
+}
+</script>
+
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
@@ -1701,6 +1757,93 @@ body.theme-neu .act-meta-chip{background:rgba(255,255,255,.06);border-color:rgba
 body.theme-neu .act-part-track{background:rgba(255,255,255,.10)}
 body.theme-neu .act-filter-btn{background:rgba(255,255,255,.06);border-color:rgba(139,92,246,.20);color:rgba(200,210,255,.65)}
 
+
+/* ════════════════════════════════════════════
+   ⚡ PERFORMANCE OVERRIDE — يلغي التأثيرات الثقيلة
+   ════════════════════════════════════════════ */
+
+/* 1. إيقاف كل animations المستمرة */
+.tl,
+.live-dot,
+.badge-new,
+.act-status.جارية,
+.class-card.new-entry,
+.splash-orb,
+.splash-ring,
+.splash-ring2,
+.splash-dot {
+  animation: none !important;
+}
+
+/* 2. إزالة backdrop-filter من كل عنصر */
+.topbar,
+.sidebar,
+.modal-overlay,
+.card,
+.kpi,
+.class-card,
+.honor-card,
+.act-card,
+.act-kpi,
+.stu-card,
+.filters-bar,
+.stu-search-bar {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* 3. إزالة backdrop-filter من topbar بشكل أقوى */
+.topbar {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: rgba(210,228,255,.90) !important;
+}
+body.dark .topbar {
+  background: rgba(4,8,22,.97) !important;
+}
+
+/* 4. إزالة will-change غير الضروري */
+.tl {
+  will-change: auto !important;
+}
+
+/* 5. إزالة filter:blur من splash orbs */
+.splash-orb {
+  filter: none !important;
+}
+
+/* 6. تبسيط transitions لتكون أسرع */
+.class-card,
+.honor-card,
+.act-card,
+.stu-card {
+  transition: none !important;
+}
+
+/* 7. إزالة box-shadow المتحركة */
+.badge-new {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+/* 8. إزالة text-shadow من الحروف */
+.tl {
+  text-shadow: none !important;
+}
+
+/* 9. تبسيط splash screen */
+.splash-ring,
+.splash-ring2 {
+  display: none !important;
+}
+
+/* 10. إزالة animation-delay من الأجزاء اللي ما عندهاش animation */
+.splash-orb:nth-child(1),
+.splash-orb:nth-child(2),
+.splash-orb:nth-child(3) {
+  animation: none !important;
+}
+
 </style>
 </head>
 <body>
@@ -2189,6 +2332,8 @@ function doLogin(){
     <input type="file" id="restoreFileInput" accept=".json" style="display:none" onchange="restoreBackupJSON(this)">
     <div class="nav-item" onclick="exportCSV()"><span class="nav-icon">⬇</span>تصدير CSV</div>
     <div class="nav-item" onclick="clearAllData()"><span class="nav-icon">🗑</span>مسح كل البيانات</div>
+    <div class="sidebar-label" style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px;">الأدوات السريعة</div>
+    <div class="nav-item" onclick="showView('quicktools')" style="background:linear-gradient(135deg,rgba(21,101,192,.10),rgba(124,58,237,.10));border:1.5px solid rgba(21,101,192,.20);font-weight:700;color:var(--sky);"><span class="nav-icon">⚡</span>أدوات سريعة</div>
     <div style="padding:16px 12px;margin-top:16px;">
       <div style="font-size:.72rem;color:var(--muted2);text-align:center;line-height:1.7">
         آخر تحديث:<br><span id="lastRefresh" style="color:var(--muted)">—</span>
@@ -2815,6 +2960,7 @@ function doLogin(){
           <div class="page-sub">إدارة بيانات المعلمين وتقييم أدائهم واستخراج التقارير</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="restoreDefaultTeachers()" style="color:#7c3aed;border-color:rgba(124,58,237,.30);background:rgba(124,58,237,.08);">↩️ استعادة المعلمين</button>
           <button class="btn btn-ghost btn-sm" onclick="openTeacherEvalReport()">📊 تقرير الأداء</button>
           <button class="btn btn-primary btn-sm" onclick="openAddTeacherModal()">➕ إضافة معلم</button>
         </div>
@@ -2910,6 +3056,62 @@ function doLogin(){
         </div>
       </div>
       <div id="annualPlanGrid"></div>
+
+      <!-- ───── بطاقة تكرار النشاط ───── -->
+      <div class="card" style="margin-top:20px;">
+        <div class="card-header">
+          <h3>🔁 تكرار نشاط موجود</h3>
+          <span style="font-size:.78rem;color:var(--muted)">انسخ أي نشاط أو بند خطة وأعد جدولته</span>
+        </div>
+        <div class="card-body">
+          <div class="fg-row" style="margin-bottom:14px;">
+            <div class="fg">
+              <label>اختر النشاط المراد تكراره</label>
+              <select id="qtRepeatSource" style="width:100%;padding:9px 14px;border:1.5px solid var(--border);border-radius:var(--r-xs);background:rgba(255,255,255,.70);font-family:'Tajawal',sans-serif;font-size:.88rem;">
+                <option value="">— اختر نشاطاً —</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label>الفصل الدراسي</label>
+              <select id="qtRepeatSem" style="width:100%;padding:9px 14px;border:1.5px solid var(--border);border-radius:var(--r-xs);background:rgba(255,255,255,.70);font-family:'Tajawal',sans-serif;font-size:.88rem;">
+                <option value="1">الفصل الأول</option>
+                <option value="2" selected>الفصل الثاني</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label>الشهر الهجري</label>
+              <select id="qtRepeatMonth" style="width:100%;padding:9px 14px;border:1.5px solid var(--border);border-radius:var(--r-xs);background:rgba(255,255,255,.70);font-family:'Tajawal',sans-serif;font-size:.88rem;">
+                <option value="7">رجب</option>
+                <option value="8">شعبان</option>
+                <option value="9">رمضان</option>
+                <option value="10">شوال</option>
+                <option value="11">ذو القعدة</option>
+                <option value="12">ذو الحجة</option>
+                <option value="1">محرم</option>
+                <option value="2">صفر</option>
+                <option value="3">ربيع الأول</option>
+                <option value="4">ربيع الآخر</option>
+                <option value="5">جمادى الأولى</option>
+                <option value="6">جمادى الآخرة</option>
+              </select>
+            </div>
+          </div>
+          <div class="fg" style="margin-bottom:14px;">
+            <label>عدد مرات التكرار</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">
+              <button class="btn btn-ghost btn-sm" id="qtRep1" onclick="setRepeatCount(1)" style="min-width:50px;">1×</button>
+              <button class="btn btn-ghost btn-sm" id="qtRep2" onclick="setRepeatCount(2)" style="min-width:50px;">2×</button>
+              <button class="btn btn-ghost btn-sm" id="qtRep3" onclick="setRepeatCount(3)" style="min-width:50px;">3×</button>
+              <button class="btn btn-ghost btn-sm" id="qtRep4" onclick="setRepeatCount(4)" style="min-width:50px;">4×</button>
+              <input type="number" id="qtRepeatCount" min="1" max="20" value="1" style="width:70px;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--r-xs);background:rgba(255,255,255,.70);font-family:'Tajawal',sans-serif;font-size:.88rem;text-align:center;">
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-primary" onclick="qtDoRepeat()" style="flex:1;">🔁 تكرار الآن</button>
+          </div>
+          <div id="qtRepeatResult" style="margin-top:14px;display:none;"></div>
+        </div>
+      </div>
     </div>
 
     <!-- ═══ SCALES ═══ -->
@@ -3779,6 +3981,7 @@ function doLogin(){
             </div>
             <div class="fg"><label>تثبيت التطبيق (PWA)</label>
               <button class="btn btn-ghost btn-sm" id="btnInstallPwa" onclick="installPwa()" style="margin-top:4px;width:100%;display:none;">📲 تثبيت على الجهاز</button>
+              <button class="btn btn-ghost btn-sm" onclick="shareSiteLink()" style="margin-top:4px;width:100%;">🔗 مشاركة وحفظ رابط الموقع</button>
               <div id="pwaInstalled" style="font-size:.80rem;color:var(--mint);font-weight:600;margin-top:4px;display:none;">✅ التطبيق مثبّت أو متاح للتثبيت من شريط العنوان</div>
             </div>
           </div>
@@ -3927,7 +4130,72 @@ function doLogin(){
       </div>
     </div>
 
-  </main>
+  
+    <!-- ═══ QUICK TOOLS ═══ -->
+    <div class="page-view" id="view-quicktools">
+      <div class="page-header">
+        <div>
+          <div class="page-title">⚡ الأدوات السريعة</div>
+          <div class="page-sub">تكرار الأنشطة — تثبيت التطبيق — التحكم في الشاشة</div>
+        </div>
+      </div>
+
+      <!-- ───── بطاقة تثبيت التطبيق ───── -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header"><h3>📲 تثبيت التطبيق على الكمبيوتر</h3></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+
+          <!-- حالة التثبيت -->
+          <div id="pwaStatusBox" style="background:rgba(21,101,192,.06);border:1px solid rgba(21,101,192,.18);border-radius:12px;padding:14px 18px;font-size:.86rem;color:var(--ink2);line-height:1.9;">
+            <div id="pwaStatusText">⏳ جارٍ التحقق من حالة التثبيت...</div>
+          </div>
+
+          <!-- زر التثبيت المباشر — يظهر فقط لو الـ prompt متاح -->
+          <button class="btn btn-primary" id="qtBtnInstall" onclick="installPwa()" style="width:100%;font-size:1rem;padding:14px;display:none;">
+            📲 تثبيت التطبيق الآن
+          </button>
+
+          <!-- خطوات يدوية — تظهر دائماً كبديل -->
+          <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:12px;padding:14px 18px;font-size:.84rem;color:var(--ink2);line-height:2;">
+            <strong>📌 التثبيت اليدوي (Chrome / Edge):</strong><br>
+            ١. افتح هذا الرابط في <strong>Chrome</strong> أو <strong>Edge</strong> على الكمبيوتر<br>
+            ٢. اضغط على <strong>⋮</strong> (القائمة) في أعلى اليمين<br>
+            ٣. اختر <strong>"تثبيت مدارس البشرى…"</strong> أو <strong>"حفظ وتشغيل كتطبيق"</strong><br>
+            ٤. أو ابحث عن أيقونة <strong>＋</strong> في شريط العنوان مباشرةً
+          </div>
+
+          <!-- نسخ الرابط -->
+          <button class="btn btn-ghost" onclick="shareSiteLink()" style="width:100%;padding:12px;">
+            🔗 نسخ رابط الموقع للمشاركة
+          </button>
+
+          <div id="qtPwaStatus" style="text-align:center;font-size:.82rem;color:var(--muted);font-weight:600;"></div>
+        </div>
+      </div>
+
+      <!-- ───── بطاقة الشاشة ───── -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header"><h3>⛶ التحكم في الشاشة</h3></div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:12px;">
+          <button class="btn btn-ghost" onclick="toggleFullscreen()" id="qtBtnFullscreen" style="width:100%;padding:14px;font-size:1rem;">
+            ⛶ ملء الشاشة الكاملة (F11)
+          </button>
+          <button class="btn btn-ghost" onclick="document.body.classList.toggle('fullscreen-mode'); qtUpdateScreenBtns();" id="qtBtnSideless" style="width:100%;padding:14px;font-size:1rem;">
+            ◻ إخفاء الشريط الجانبي
+          </button>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-ghost" onclick="document.body.style.zoom=(parseFloat(document.body.style.zoom||1)+0.1).toFixed(1);qtUpdateZoom()" style="flex:1;padding:12px;">🔍 تكبير</button>
+            <button class="btn btn-ghost" onclick="document.body.style.zoom=(parseFloat(document.body.style.zoom||1)-0.1).toFixed(1);qtUpdateZoom()" style="flex:1;padding:12px;">🔎 تصغير</button>
+            <button class="btn btn-ghost" onclick="document.body.style.zoom='1';qtUpdateZoom()" style="flex:1;padding:12px;">↺ إعادة ضبط</button>
+          </div>
+          <div id="qtZoomLabel" style="text-align:center;font-size:.80rem;color:var(--muted);font-weight:600;">حجم العرض الحالي: 100%</div>
+        </div>
+      </div>
+
+    </div>
+    <!-- ═══ END QUICK TOOLS ═══ -->
+
+</main>
 </div>
 
 <!-- ═══ بحث شامل ═══ -->
@@ -4922,11 +5190,64 @@ document.addEventListener('firebaseReady', () => {
     DB._loadFromFirebase(window._fsCache || {});
     DB._ready = true;
   }
-  // نعيد رسم الحقيبة السحابية بعد تحميل Firebase
-  if(typeof window.cbRender === 'function'){
-    window.cbRender();
-    if(typeof window.cbUpdateKPIs === 'function') window.cbUpdateKPIs();
-  }
+  // ── تأكد من وجود المعلمين: لو القائمة فاضية أو ما فيهاش بيانات → احشي من الـ hardcoded ──
+  try {
+    const raw = DB.get('guidance_teachers_v1');
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (!parsed || !Array.isArray(parsed) || parsed.length === 0) {
+      if (typeof HARDCODED_TEACHERS !== 'undefined' && HARDCODED_TEACHERS.length > 0) {
+        DB.setJSON('guidance_teachers_v1', HARDCODED_TEACHERS.map(t=>({...t})));
+        console.log('[Teachers] Seeded', HARDCODED_TEACHERS.length, 'teachers from hardcoded list');
+      }
+    }
+  } catch(e) { console.warn('[Teachers] seed error:', e); }
+
+  // ══════════════════════════════════════════════════════
+  // 🔄 إعادة رسم كل الصفحات بعد تحميل البيانات من Firebase
+  // هذا يضمن ظهور البيانات عند فتح الموقع من جهاز آخر
+  // ══════════════════════════════════════════════════════
+  setTimeout(function(){
+    try {
+      // إعادة حساب الكاش الداخلي (students, store...)
+      if(typeof window._storeCache !== 'undefined') window._storeCache = null;
+      if(typeof window._reviewedCache !== 'undefined') window._reviewedCache = null;
+
+      // الصفحة الحالية النشطة
+      var activePage = document.querySelector('.page-view.active');
+      var activeId   = activePage ? activePage.id.replace('view-','') : 'dashboard';
+
+      // إعادة رسم الـ Dashboard
+      if(typeof window.renderDashWidgets === 'function') try{ window.renderDashWidgets(); }catch(e){}
+      if(typeof window.renderDashboard   === 'function') try{ window.renderDashboard(); }catch(e){}
+
+      // إعادة رسم الصفحة النشطة حسب اسمها
+      var pageRenderers = {
+        'students':     function(){ if(typeof window.renderStudentsPage  === 'function') window.renderStudentsPage(); },
+        'teachers':     function(){ if(typeof window.renderTeachersPage  === 'function') window.renderTeachersPage(); },
+        'meetings':     function(){ if(typeof window.renderMeetingsPage  === 'function') window.renderMeetingsPage(); },
+        'notes':        function(){ if(typeof window.renderNotesPage     === 'function') window.renderNotesPage(); },
+        'cases':        function(){ if(typeof window.renderCasesPage     === 'function') window.renderCasesPage(); },
+        'annualplan':   function(){ if(typeof window.renderAnnualPlan    === 'function') window.renderAnnualPlan(); },
+        'activities':   function(){ if(typeof window.renderActivities    === 'function') window.renderActivities(); },
+        'excellent':    function(){ if(typeof window.renderExcellentPage === 'function') window.renderExcellentPage(); },
+        'weak':         function(){ if(typeof window.renderWeakPage      === 'function') window.renderWeakPage(); },
+        'honors':       function(){ if(typeof window.renderHonors        === 'function') window.renderHonors(); },
+        'reminders':    function(){ if(typeof window.renderReminders     === 'function') window.renderReminders(); },
+        'counseling':   function(){ if(typeof window.renderCasesPage     === 'function') window.renderCasesPage(); },
+        'scales':       function(){ if(typeof window.renderScaleResults  === 'function') window.renderScaleResults(); },
+      };
+
+      if(pageRenderers[activeId]) pageRenderers[activeId]();
+
+      // تحديث الـ KPIs والـ badges في الشريط الجانبي
+      if(typeof window.updateTeacherBadge === 'function') try{ window.updateTeacherBadge(); }catch(e){}
+      if(typeof window.updateCaseBadge    === 'function') try{ window.updateCaseBadge(); }catch(e){}
+      if(typeof window.cbRender           === 'function') try{ window.cbRender(); }catch(e){}
+      if(typeof window.cbUpdateKPIs       === 'function') try{ window.cbUpdateKPIs(); }catch(e){}
+
+      console.log('[Firebase] All pages refreshed after data load');
+    } catch(err){ console.warn('[Firebase] Re-render error:', err); }
+  }, 300);
 });
 
 // ════════════════════════════════════════════
@@ -6577,18 +6898,37 @@ function showView(name){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('view-'+name)?.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>{ if(n.getAttribute('onclick')?.includes(name)) n.classList.add('active'); });
-  if(name==='overview')    renderOverviewPage();
-  if(name==='dashboard')  renderDashboard();
-  if(name==='absences')   { populateClassFilter(); renderAbsTable(); }
-  if(name==='analytics')  renderAnalytics();
-  if(name==='classes')    renderClassesView();
-  if(name==='students')   renderStudentsPage();
-  if(name==='teachers')   renderTeachersPage();
-  if(name==='meetings')   renderMeetings();
-  if(name==='notes')       renderNotes();
-  if(name==='cases')      renderCasesPage();
-  if(name==='annualplan') renderAnnualPlan();
-  if(name==='scales')     { showScale('behavior'); renderScaleResults(); }
+
+  // لو Firebase لسه ما اتحملش — ننتظره أول
+  if(!DB._ready && !window._firebaseReady){
+    document.addEventListener('firebaseReady', function onFBReady(){
+      document.removeEventListener('firebaseReady', onFBReady);
+      _renderPage(name);
+    }, { once: true });
+    return;
+  }
+  _renderPage(name);
+}
+
+function _renderPage(name){
+  if(name==='overview')      renderOverviewPage();
+  if(name==='dashboard')     renderDashboard();
+  if(name==='absences')      { populateClassFilter(); renderAbsTable(); }
+  if(name==='analytics')     renderAnalytics();
+  if(name==='classes')       renderClassesView();
+  if(name==='students')      renderStudentsPage();
+  if(name==='teachers')      renderTeachersPage();
+  if(name==='meetings')      renderMeetings();
+  if(name==='notes')          renderNotes();
+  if(name==='cases')         renderCasesPage();
+  if(name==='annualplan')    renderAnnualPlan();
+  if(name==='activities')    { if(typeof renderActivities==='function') renderActivities(); }
+  if(name==='excellent')     { if(typeof renderExcellentPage==='function') renderExcellentPage(); }
+  if(name==='weak')          { if(typeof renderWeakPage==='function') renderWeakPage(); }
+  if(name==='honors')        { if(typeof renderHonors==='function') renderHonors(); }
+  if(name==='reminders')     { if(typeof renderReminders==='function') renderReminders(); }
+  if(name==='counseling')    renderCasesPage();
+  if(name==='scales')        { showScale('behavior'); renderScaleResults(); }
   if(name==='monthlyreport') {}
 }
 
@@ -8042,6 +8382,21 @@ function importSem2Plan1447(){
   toast('✅ تم استيراد '+added+' نشاط من خطة الفصل الثاني 1447هـ','success');
 }
 
+
+// ════════════════════════════════════════════════════════
+// 📋 AUTO-INJECT: خطة التوجيه الفصل الثاني 1447هـ
+//    تُضاف تلقائياً عند أول تشغيل — لا تحتاج ضغط زر
+// ════════════════════════════════════════════════════════
+document.addEventListener('firebaseReady', function(){
+  setTimeout(function(){
+    try{
+      var existing = getPlan();
+      var already = existing.some(function(x){ return x.sourcePlan==='sem2_1447'; });
+      if(!already){ importSem2Plan1447(); }
+    }catch(e){ console.warn('auto-inject plan:', e); }
+  }, 800);
+});
+
 // ── الرسم ──
 function renderAnnualPlan(){
   const plan = getPlan();
@@ -9261,8 +9616,8 @@ document.getElementById('importStudentsModal')?.addEventListener('click',functio
             +'<span class="act-cat-badge '+act.cat+'">'+act.cat+'</span>'
           +'</div>'
           +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">'
-            +'<button class="btn btn-ghost btn-xs" onclick="editActivity(\''+act.id+'\')" style="padding:4px 10px">✏️</button>'
-            +'<button class="btn btn-danger btn-xs" onclick="deleteActivity(\''+act.id+'\')" style="padding:4px 10px">🗑</button>'
+            +(act._fromPlan ? '' : '<button class="btn btn-ghost btn-xs" onclick="editActivity(\''+act.id+'\')" style="padding:4px 10px">✏️</button>')
+            +(act._fromPlan ? '' : '<button class="btn btn-danger btn-xs" onclick="deleteActivity(\''+act.id+'\')" style="padding:4px 10px">🗑</button>')
           +'</div>'
         +'</div>'
         +(act.desc ? '<div class="act-desc">'+escHtml(act.desc)+'</div>' : '')
@@ -9280,8 +9635,8 @@ document.getElementById('importStudentsModal')?.addEventListener('click',functio
       +'<div class="act-card-footer">'
         +'<span class="act-status '+act.status+'">'+statusDot+act.status+'</span>'
         +'<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'
-          +(act.planId ? '<span style="font-size:.68rem;font-weight:700;color:#1565c0;background:rgba(21,101,192,.10);border:1px solid rgba(21,101,192,.20);padding:2px 8px;border-radius:99px;">📅 في الخطة</span>' : '<button class="btn btn-ghost btn-xs" onclick="addActToPlan(\''+act.id+'\')" title="إضافة للخطة السنوية">📅 أضف للخطة</button>')
-          +'<button class="btn btn-ghost btn-xs" onclick="cycleActStatus(\''+act.id+'\')" >تغيير الحالة</button>'
+          +(act._fromPlan ? '<span style="font-size:.68rem;font-weight:700;color:#7c3aed;background:rgba(124,58,237,.10);border:1px solid rgba(124,58,237,.25);padding:2px 8px;border-radius:99px;">📋 خطة التوجيه</span>' : act.planId ? '<span style="font-size:.68rem;font-weight:700;color:#1565c0;background:rgba(21,101,192,.10);border:1px solid rgba(21,101,192,.20);padding:2px 8px;border-radius:99px;">📅 في الخطة</span>' : '<button class="btn btn-ghost btn-xs" onclick="addActToPlan(\''+act.id+'\')" title="إضافة للخطة السنوية">📅 أضف للخطة</button>')
+          +(act._fromPlan ? '<button class="btn btn-ghost btn-xs" onclick="showView(\'annualplan\')" title="عرض الخطة السنوية">📅 الخطة</button>' : '<button class="btn btn-ghost btn-xs" onclick="cycleActStatus(\''+act.id+'\')" >تغيير الحالة</button>')
         +'</div>'
       +'</div>'
     +'</div>';
@@ -9289,9 +9644,42 @@ document.getElementById('importStudentsModal')?.addEventListener('click',functio
 
   function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+  // ── بناء نشاط مؤقت من بند الخطة السنوية ──
+  function planItemToAct(p){
+    var catMap = {توعية:'توعوي',سلوك:'توعوي',وقاية:'توعوي',أكاديمي:'تعليمي','مهارات حياتية':'مهارات حياتية',أسري:'توعوي'};
+    var statMap= {مخطط:'مجدولة',جاري:'جارية',منجز:'منتهية',ملغى:'ملغية'};
+    return {
+      id: '__plan__'+p.id,
+      _fromPlan: true,
+      planId: p.id,
+      name: p.title,
+      icon: p.status==='منجز'?'✅':'📋',
+      cat: catMap[p.axis]||'توعوي',
+      status: statMap[p.status]||'مجدولة',
+      dateStart: p.gregDate||'',
+      place: '',
+      supervisor: '',
+      targetNum: p.beneficiaries||0,
+      actualNum: p.beneficiaries||0,
+      desc: p.desc||('الأسبوع '+(p.sourcePlan==='sem2_1447'?'':'')+(p.desc||'')),
+      notes: p.target||'',
+      _weekLabel: p.desc||''
+    };
+  }
+
   // ── رسم الشبكة ──
   function renderActGrid(cat){
     var acts = getActivities();
+    // دمج بنود خطة التوجيه السنوية التي لا ترتبط بنشاط موجود
+    try{
+      var planItems = DB.getJSON('bs_counselor_plan', []);
+      var linkedIds = acts.filter(function(a){ return a.planId; }).map(function(a){ return a.planId; });
+      planItems.forEach(function(p){
+        if(p.title && !linkedIds.includes(p.id)){
+          acts.push(planItemToAct(p));
+        }
+      });
+    }catch(e){}
     var filtered = cat && cat!=='الكل' ? acts.filter(function(a){ return a.cat===cat; }) : acts;
     var grid = document.getElementById('actGrid');
     var empty= document.getElementById('actEmpty');
@@ -10176,6 +10564,13 @@ document.addEventListener('DOMContentLoaded', function(){
   setTimeout(window.checkHighAbsenceAlert, 500);
 });
 
+// تحديث حالة PWA بعد تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(function(){
+    if(typeof _updatePwaStatusBox === 'function') _updatePwaStatusBox();
+  }, 800);
+});
+
 // ════════════════════════════════════════════════
 // 🗓️ التقويم التفاعلي — Interactive Calendar
 // ════════════════════════════════════════════════
@@ -10206,13 +10601,14 @@ document.addEventListener('DOMContentLoaded', function(){
         if(a.dateStart) evts.push({date:a.dateStart, label:a.name||'نشاط', color:'#f59e0b', icon:'🎯', page:'activities'});
       });
     }catch(e){}
-    // بنود الخطة السنوية (لها تاريخ ميلادي)
+    // بنود الخطة السنوية (لها تاريخ ميلادي) — تظهر في التقويم وتشمل خطة التوجيه
     try{
       DB.getJSON('bs_counselor_plan', []).forEach(function(p){
         if(p.gregDate){
           var clr = p.status==='منجز'?'#10b981':p.status==='ملغى'?'#ef4444':p.status==='جاري'?'#1565c0':'#7c3aed';
           var icn = p.status==='منجز'?'✅':p.status==='ملغى'?'❌':p.status==='جاري'?'🔄':'📌';
-          evts.push({date:p.gregDate, label:p.title, color:clr, icon:icn, page:'annualplan'});
+          var lbl = (p.sourcePlan==='sem2_1447' ? '📋 ' : '') + p.title;
+          evts.push({date:p.gregDate, label:lbl, color:clr, icon:icn, page:'annualplan'});
         }
       });
     }catch(e){}
@@ -10649,26 +11045,105 @@ document.addEventListener('click', function(e){
 // 📲 PWA — Progressive Web App
 // ════════════════════════════════════════════════
 var _pwaPrompt = null;
+
 window.addEventListener('beforeinstallprompt', function(e){
   e.preventDefault();
   _pwaPrompt = e;
-  var btn = document.getElementById('btnInstallPwa');
-  if(btn) btn.style.display='block';
+  window._deferredPwaPrompt = e;
+  // أظهر زر التثبيت الفوري في كل الأماكن
+  ['btnInstallPwa','qtBtnInstall'].forEach(function(id){
+    var btn = document.getElementById(id);
+    if(btn) btn.style.display = 'block';
+  });
+  // حدّث صندوق الحالة
+  _updatePwaStatusBox();
+  console.log('[PWA] Install prompt available');
 });
+
+function _updatePwaStatusBox(){
+  var box  = document.getElementById('pwaStatusBox');
+  var text = document.getElementById('pwaStatusText');
+  if(!box || !text) return;
+
+  if(window.matchMedia('(display-mode: standalone)').matches){
+    box.style.background  = 'rgba(16,185,129,.08)';
+    box.style.borderColor = 'rgba(16,185,129,.30)';
+    text.innerHTML = '✅ <strong>التطبيق مثبّت ويعمل بوضع مستقل</strong><br><span style="color:var(--muted)">يمكنك إغلاق المتصفح والتطبيق سيبقى في قائمة التطبيقات</span>';
+    var btn = document.getElementById('qtBtnInstall');
+    if(btn){ btn.textContent = '✅ مثبّت بالفعل'; btn.disabled = true; btn.style.display = 'block'; btn.style.opacity = '0.6'; }
+  } else if(_pwaPrompt){
+    box.style.background  = 'rgba(21,101,192,.06)';
+    box.style.borderColor = 'rgba(21,101,192,.25)';
+    text.innerHTML = '👆 <strong>جاهز للتثبيت!</strong> اضغط الزر الأزرق أدناه لتثبيت التطبيق على كمبيوترك<br><span style="color:var(--muted)">سيعمل كتطبيق مستقل بدون الحاجة لفتح المتصفح</span>';
+    var btn = document.getElementById('qtBtnInstall');
+    if(btn){ btn.style.display = 'block'; btn.disabled = false; btn.style.opacity = '1'; }
+  } else {
+    box.style.background  = 'rgba(21,101,192,.06)';
+    box.style.borderColor = 'rgba(21,101,192,.18)';
+    text.innerHTML = '📌 <strong>اتبع الخطوات اليدوية أدناه لتثبيت التطبيق</strong>';
+  }
+}
+
 window.installPwa = function(){
-  if(!_pwaPrompt){ 
-    document.getElementById('pwaInstalled').style.display='block';
-    return; 
+  if(!_pwaPrompt){
+    _updatePwaStatusBox();
+    return;
   }
   _pwaPrompt.prompt();
   _pwaPrompt.userChoice.then(function(r){
-    if(r.outcome==='accepted'){ toast('✅ تم تثبيت التطبيق','success'); }
-    _pwaPrompt=null;
-    var btn=document.getElementById('btnInstallPwa');
-    if(btn) btn.style.display='none';
+    if(r.outcome === 'accepted'){
+      toast('✅ تم تثبيت التطبيق بنجاح','success');
+    }
+    _pwaPrompt = null;
+    window._deferredPwaPrompt = null;
+    ['btnInstallPwa','qtBtnInstall'].forEach(function(id){
+      var btn = document.getElementById(id);
+      if(btn) btn.style.display = 'none';
+    });
+    _updatePwaStatusBox();
   });
 };
-window.addEventListener('appinstalled',function(){ toast('✅ تم تثبيت التطبيق بنجاح','success'); });
+
+window.addEventListener('appinstalled', function(){
+  toast('✅ تم تثبيت التطبيق بنجاح','success');
+  _pwaPrompt = null;
+  _updatePwaStatusBox();
+});
+
+// تحديث الحالة عند فتح صفحة الأدوات السريعة
+window.qtUpdatePwa = function(){ _updatePwaStatusBox(); };
+
+window.shareSiteLink = function(){
+  var url = window.location.href;
+  // جرب Web Share API أولاً (موبايل)
+  if(navigator.share){
+    navigator.share({ title: 'لوحة الإدارة — مدارس البشرى', url: url })
+      .then(function(){ toast('✅ تم المشاركة','success'); })
+      .catch(function(){});
+    return;
+  }
+  // Clipboard API
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(function(){
+      toast('✅ تم نسخ رابط الموقع — الصقه في المتصفح أو أرسله','success');
+    }).catch(function(){
+      _fallbackCopyLink(url);
+    });
+    return;
+  }
+  _fallbackCopyLink(url);
+};
+
+window._fallbackCopyLink = function(url){
+  var ta = document.createElement('textarea');
+  ta.value = url;
+  ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try{ document.execCommand('copy'); toast('✅ تم نسخ رابط الموقع','success'); }
+  catch(e){ toast('الرابط: ' + url,'info'); }
+  document.body.removeChild(ta);
+};
 
 // ════════════════════════════════════════════════
 // 🏠 ويدجت اليوم + نسبة الخطة — Dashboard Widgets
@@ -11145,65 +11620,32 @@ const HARDCODED_TEACHERS = [
 function getTeachers(){
   try{
     const raw = DB.get(TCH_KEY);
-    if(raw){ const s=JSON.parse(raw); if(s&&s.length>0) return s; }
+    if(raw){
+      const s = JSON.parse(raw);
+      // لو القائمة موجودة وفيها بيانات نرجعها، لو فاضية نرجع الـ hardcoded
+      if(s && Array.isArray(s) && s.length > 0) return s;
+    }
   }catch(e){}
+  // لو ما في بيانات أو القائمة فاضية — نحفظ ونرجع الـ hardcoded
   DB.setJSON(TCH_KEY, HARDCODED_TEACHERS);
   return HARDCODED_TEACHERS.map(t=>({...t}));
 }
 function saveTeachers(list){ DB.setJSON(TCH_KEY, list); updateTeacherBadge(); }
 function updateTeacherBadge(){ const el=document.getElementById('sideTeacherCount'); if(el) el.textContent=getTeachers().length; }
 
-function renderTeachersPage(){
-  const teachers=getTeachers();
-  const q=(document.getElementById('tchSearch')?.value||'').trim().toLowerCase();
-  const specVal=document.getElementById('tchFilterSpec')?.value||'all';
-  const specSel=document.getElementById('tchFilterSpec');
-  if(specSel){
-    const specs=[...new Set(teachers.map(t=>t.spec).filter(Boolean))].sort();
-    const cur=specSel.value;
-    specSel.innerHTML='<option value="all">كل التخصصات</option>'+specs.map(s=>`<option value="${s}"${s===cur?' selected':''}>${s}</option>`).join('');
+function restoreDefaultTeachers(){
+  if(!confirm('هل تريد استعادة قائمة المعلمين الافتراضية (22 معلم)؟\nسيتم الاحتفاظ بالمعلمين الحاليين وإضافة من غاب منهم فقط.')) return;
+  const current = getTeachers();
+  const currentNames = current.map(t => t.name.trim());
+  const missing = HARDCODED_TEACHERS.filter(h => !currentNames.includes(h.name.trim()));
+  if(missing.length === 0){
+    toast('✅ جميع المعلمين الافتراضيين موجودون بالفعل','info');
+    return;
   }
-  let list=teachers.filter(t=>{
-    if(q && !t.name.toLowerCase().includes(q) && !(t.spec||'').toLowerCase().includes(q) && !(t.phone||'').includes(q)) return false;
-    if(specVal!=='all' && t.spec!==specVal) return false;
-    return true;
-  });
-  document.getElementById('tchKpiTotal').textContent   = teachers.length;
-  document.getElementById('tchKpiPhone').textContent   = teachers.filter(t=>t.phone).length;
-  document.getElementById('tchKpiAccount').textContent = teachers.filter(t=>t.email||t.whatsapp||t.twitter).length;
-  document.getElementById('tchKpiNotes').textContent   = teachers.filter(t=>t.notes).length;
-  const grid=document.getElementById('tchGrid');
-  const empty=document.getElementById('tchEmpty');
-  if(!list.length){ grid.innerHTML=''; empty.style.display='block'; return; }
-  empty.style.display='none';
-  const colors=['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899'];
-  grid.innerHTML=list.map(t=>{
-    const initials=t.name.split(' ').slice(0,2).map(w=>w[0]).join('');
-    const color=colors[t.name.charCodeAt(0)%colors.length];
-    const badges=[];
-    if(t.phone)    badges.push(`<span style="background:rgba(16,185,129,.12);color:#059669;border-radius:99px;padding:3px 10px;font-size:.74rem;font-weight:700;display:inline-block;">📱 ${t.phone}</span>`);
-    if(t.email)    badges.push(`<span style="background:rgba(59,130,246,.10);color:#2563eb;border-radius:99px;padding:3px 10px;font-size:.74rem;font-weight:700;display:inline-block;">✉️ ${t.email}</span>`);
-    if(t.whatsapp) badges.push(`<span style="background:rgba(37,211,102,.12);color:#128c7e;border-radius:99px;padding:3px 10px;font-size:.74rem;font-weight:700;display:inline-block;">💬 واتساب</span>`);
-    if(t.twitter)  badges.push(`<span style="background:rgba(0,0,0,.07);color:#334155;border-radius:99px;padding:3px 10px;font-size:.74rem;font-weight:700;display:inline-block;">𝕏 ${t.twitter}</span>`);
-    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 18px 14px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:10px;transition:box-shadow .18s;" onmouseover="this.style.boxShadow='0 4px 18px rgba(0,0,0,.10)'" onmouseout="this.style.boxShadow='var(--shadow-sm)'">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="width:46px;height:46px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:900;color:#fff;flex-shrink:0;">${initials}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:.95rem;font-weight:800;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
-          <div style="font-size:.78rem;color:var(--muted);margin-top:2px;">${t.spec||'<span style="opacity:.5">لا يوجد تخصص</span>'}${t.natId?' &nbsp;·&nbsp; 🪪 '+t.natId:''}</div>
-        </div>
-        <div style="display:flex;gap:6px;flex-shrink:0;">
-          <button onclick="openEditTeacherModal('${t.id}')" title="تعديل" style="background:rgba(59,130,246,.10);border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:1rem;color:#2563eb;display:flex;align-items:center;justify-content:center;transition:background .15s;" onmouseover="this.style.background='rgba(59,130,246,.2)'" onmouseout="this.style.background='rgba(59,130,246,.10)'">✏️</button>
-          <button onclick="deleteTeacher('${t.id}')" title="حذف" style="background:rgba(239,68,68,.08);border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:1rem;color:#dc2626;display:flex;align-items:center;justify-content:center;transition:background .15s;" onmouseover="this.style.background='rgba(239,68,68,.18)'" onmouseout="this.style.background='rgba(239,68,68,.08)'">🗑️</button>
-        </div>
-      </div>
-      ${badges.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;">${badges.join('')}</div>`:''}
-      ${t.phone2?`<div style="font-size:.76rem;color:var(--muted);">📞 احتياطي: ${t.phone2}</div>`:''}
-      ${t.otherAcc?`<div style="font-size:.76rem;color:var(--muted);">🔗 ${t.otherAcc}</div>`:''}
-      ${t.startDate?`<div style="font-size:.74rem;color:var(--muted);">📅 تاريخ المباشرة: ${t.startDate}</div>`:''}
-      ${t.notes?`<div style="margin-top:4px;background:rgba(245,158,11,.08);border-right:3px solid var(--gold);border-radius:0 6px 6px 0;padding:7px 10px;font-size:.80rem;color:var(--ink);line-height:1.55;white-space:pre-wrap;">${t.notes}</div>`:''}
-    </div>`;
-  }).join('');
+  const merged = [...current, ...missing.map(t=>({...t}))];
+  saveTeachers(merged);
+  renderTeachersPage();
+  toast('✅ تمت استعادة '+missing.length+' معلم','success');
 }
 
 function openAddTeacherModal(){
@@ -11213,23 +11655,6 @@ function openAddTeacherModal(){
   // Reset eval fields
   ['tchFEvalCommit','tchFEvalComm','tchFEvalClass','tchFEvalDev','tchFEvalNotes','tchFEvalDate'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   setTchEvalStar(0);
-  document.getElementById('teacherModal').classList.add('open');
-}
-function openEditTeacherModal(id){
-  const t=getTeachers().find(x=>x.id===id); if(!t) return;
-  document.getElementById('teacherModalTitle').textContent='✏️ تعديل بيانات المدرس';
-  document.getElementById('tchEditId').value     =t.id;
-  document.getElementById('tchFName').value      =t.name      ||'';
-  document.getElementById('tchFSpec').value      =t.spec      ||'';
-  document.getElementById('tchFNatId').value     =t.natId     ||'';
-  document.getElementById('tchFStartDate').value =t.startDate ||'';
-  document.getElementById('tchFPhone').value     =t.phone     ||'';
-  document.getElementById('tchFPhone2').value    =t.phone2    ||'';
-  document.getElementById('tchFEmail').value     =t.email     ||'';
-  document.getElementById('tchFWhatsapp').value  =t.whatsapp  ||'';
-  document.getElementById('tchFTwitter').value   =t.twitter   ||'';
-  document.getElementById('tchFOtherAcc').value  =t.otherAcc  ||'';
-  document.getElementById('tchFNotes').value     =t.notes     ||'';
   document.getElementById('teacherModal').classList.add('open');
 }
 function closeTeacherModal(){ document.getElementById('teacherModal').classList.remove('open'); }
@@ -11985,42 +12410,7 @@ function setTchEvalStar(v){
   });
 }
 
-// Extend saveTeacher to include eval fields
-const _origSaveTeacher = saveTeacher;
-function saveTeacher(){
-  const name=document.getElementById('tchFName').value.trim();
-  if(!name){ toast('يرجى إدخال اسم المعلم','error'); return; }
-  const list=getTeachers();
-  const editId=document.getElementById('tchEditId').value;
-  const evalStars=parseInt(document.getElementById('tchFEvalStars')?.value||0)||0;
-  const obj={
-    id:editId||'tch_'+Date.now(), name,
-    spec:     document.getElementById('tchFSpec').value.trim(),
-    natId:    document.getElementById('tchFNatId').value.trim(),
-    startDate:document.getElementById('tchFStartDate').value,
-    phone:    document.getElementById('tchFPhone').value.trim(),
-    phone2:   document.getElementById('tchFPhone2').value.trim(),
-    email:    document.getElementById('tchFEmail').value.trim(),
-    whatsapp: document.getElementById('tchFWhatsapp').value.trim(),
-    twitter:  document.getElementById('tchFTwitter').value.trim(),
-    otherAcc: document.getElementById('tchFOtherAcc').value.trim(),
-    notes:    document.getElementById('tchFNotes').value.trim(),
-    // Evaluation fields
-    evalStars,
-    evalCommit:  document.getElementById('tchFEvalCommit')?.value||'',
-    evalComm:    document.getElementById('tchFEvalComm')?.value||'',
-    evalClass:   document.getElementById('tchFEvalClass')?.value||'',
-    evalDev:     document.getElementById('tchFEvalDev')?.value||'',
-    evalNotes:   document.getElementById('tchFEvalNotes')?.value.trim()||'',
-    evalDate:    document.getElementById('tchFEvalDate')?.value||'',
-  };
-  if(editId){ const idx=list.findIndex(t=>t.id===editId); if(idx>-1) list[idx]=obj; else list.push(obj); toast('✅ تم تحديث بيانات المعلم','success'); }
-  else { list.push(obj); toast('✅ تمت إضافة المعلم','success'); }
-  saveTeachers(list); closeTeacherModal(); renderTeachersPage();
-}
-
-// Override openEditTeacherModal to also load eval fields
-const _origOpenEditTeacher = openEditTeacherModal;
+// openEditTeacherModal with eval fields
 function openEditTeacherModal(id){
   const t=getTeachers().find(x=>x.id===id); if(!t) return;
   document.getElementById('teacherModalTitle').textContent='✏️ تعديل بيانات المعلم';
@@ -12047,8 +12437,7 @@ function openEditTeacherModal(id){
   document.getElementById('teacherModal').classList.add('open');
 }
 
-// Override renderTeachersPage to use new KPIs and show eval badge
-const _origRenderTeachers = renderTeachersPage;
+// renderTeachersPage with eval KPIs
 function renderTeachersPage(){
   const teachers=getTeachers();
   const q=(document.getElementById('tchSearch')?.value||'').trim().toLowerCase();
@@ -12640,6 +13029,157 @@ document.addEventListener('DOMContentLoaded', ()=>{
     }, 2000);
   });
 })();
+
+// ════════════════════════════════════════════════════════
+// ⚡ QUICK TOOLS
+// ════════════════════════════════════════════════════════
+(function(){
+
+  // ── تحديث dropdown النشاط عند دخول الصفحة ──
+  var origShow = window.showView;
+  window.showView = function(id){
+    if(typeof origShow==='function') origShow(id);
+    if(id==='quicktools' || id==='annualplan') qtInit();
+  };
+
+  function qtInit(){
+    // ملء قائمة الأنشطة من الخطة السنوية + bs_activities
+    var sel = document.getElementById('qtRepeatSource');
+    if(!sel) return;
+    sel.innerHTML = '<option value="">— اختر نشاطاً —</option>';
+
+    // من الخطة السنوية
+    try{
+      var plan = DB.getJSON('bs_counselor_plan', []);
+      if(plan.length){
+        var grp1 = document.createElement('optgroup');
+        grp1.label = '📅 الخطة السنوية';
+        plan.forEach(function(p){
+          var o = document.createElement('option');
+          o.value = 'plan::' + p.id;
+          o.textContent = p.title + ' — ' + (p.desc||'').slice(0,30);
+          grp1.appendChild(o);
+        });
+        sel.appendChild(grp1);
+      }
+    }catch(e){}
+
+    // من صفحة الأنشطة
+    try{
+      var acts = DB.getJSON('bs_activities', []);
+      if(acts.length){
+        var grp2 = document.createElement('optgroup');
+        grp2.label = '🎯 الأنشطة المضافة';
+        acts.forEach(function(a){
+          var o = document.createElement('option');
+          o.value = 'act::' + a.id;
+          o.textContent = a.name;
+          grp2.appendChild(o);
+        });
+        sel.appendChild(grp2);
+      }
+    }catch(e){}
+
+    // PWA status (only on quicktools page)
+    if(typeof qtUpdatePwa === 'function') try{ qtUpdatePwa(); }catch(e){}
+    if(typeof qtUpdateScreenBtns === 'function') try{ qtUpdateScreenBtns(); }catch(e){}
+    if(typeof qtUpdateZoom === 'function') try{ qtUpdateZoom(); }catch(e){}
+  }
+
+  // ── عدد التكرار ──
+  window.setRepeatCount = function(n){
+    document.getElementById('qtRepeatCount').value = n;
+    [1,2,3,4].forEach(function(x){
+      var btn = document.getElementById('qtRep'+x);
+      if(btn) btn.className = 'btn btn-sm ' + (x===n ? 'btn-primary' : 'btn-ghost');
+    });
+  };
+
+  // ── تنفيذ التكرار ──
+  window.qtDoRepeat = function(){
+    var srcVal  = document.getElementById('qtRepeatSource').value;
+    var sem     = parseInt(document.getElementById('qtRepeatSem').value);
+    var month   = parseInt(document.getElementById('qtRepeatMonth').value);
+    var count   = Math.max(1, Math.min(20, parseInt(document.getElementById('qtRepeatCount').value)||1));
+    var result  = document.getElementById('qtRepeatResult');
+
+    if(!srcVal){ toast('اختر النشاط أولاً','error'); return; }
+
+    var plan = DB.getJSON('bs_counselor_plan', []);
+    var added = [];
+
+    for(var i=0; i<count; i++){
+      var newItem = null;
+
+      if(srcVal.startsWith('plan::')){
+        var pid = srcVal.replace('plan::','');
+        var orig = plan.find(function(p){ return p.id===pid; });
+        if(!orig){ toast('النشاط غير موجود','error'); return; }
+        newItem = Object.assign({}, orig, {
+          id: 'plan_rep_qt_'+Date.now()+'_'+i,
+          semester: sem,
+          month: month,
+          status: 'مخطط',
+          beneficiaries: 0,
+          linkedActId: null,
+          repeatedFrom: orig.id,
+          sourcePlan: 'manual_repeat'
+        });
+      } else {
+        var aid = srcVal.replace('act::','');
+        var acts = DB.getJSON('bs_activities', []);
+        var origAct = acts.find(function(a){ return a.id===aid; });
+        if(!origAct){ toast('النشاط غير موجود','error'); return; }
+        var catToAxis = {توعوي:'توعية',تعليمي:'أكاديمي','مهارات حياتية':'مهارات حياتية',ترفيهي:'مهارات حياتية',رياضي:'مهارات حياتية',ديني:'وقاية'};
+        newItem = {
+          id: 'plan_rep_qt_'+Date.now()+'_'+i,
+          title: origAct.name,
+          axis: catToAxis[origAct.cat]||'توعية',
+          semester: sem,
+          month: month,
+          target: '',
+          beneficiaries: 0,
+          desc: 'مكرر من: ' + origAct.name,
+          status: 'مخطط',
+          linkedActId: null,
+          repeatedFrom: origAct.id,
+          gregDate: origAct.dateStart||'',
+          sourcePlan: 'manual_repeat'
+        };
+      }
+
+      plan.push(newItem);
+      added.push(newItem.title);
+    }
+
+    DB.setJSON('bs_counselor_plan', plan);
+
+    // عرض نتيجة
+    result.style.display = 'block';
+    result.innerHTML = '<div style="background:rgba(16,185,129,.10);border:1px solid rgba(16,185,129,.30);border-radius:10px;padding:12px 16px;">'
+      + '<div style="font-weight:800;color:#059669;margin-bottom:6px;">✅ تم إضافة '+added.length+' نشاط للخطة السنوية</div>'
+      + added.map(function(t){ return '<div style="font-size:.82rem;color:var(--muted);margin-bottom:2px;">📋 '+t+'</div>'; }).join('')
+      + '<button class="btn btn-ghost btn-sm" onclick="showView(&quot;annualplan&quot;)" style="margin-top:10px;">📅 عرض الخطة السنوية</button>'
+      + '</div>';
+
+    toast('✅ تم تكرار '+added.length+' نشاط بنجاح','success');
+  };
+
+  // ── الشاشة ──
+  window.qtUpdateScreenBtns = function(){
+    var btn = document.getElementById('qtBtnSideless');
+    if(btn) btn.textContent = document.body.classList.contains('fullscreen-mode')
+      ? '◼ إظهار الشريط الجانبي' : '◻ إخفاء الشريط الجانبي';
+  };
+
+  window.qtUpdateZoom = function(){
+    var z = parseFloat(document.body.style.zoom||1);
+    var lbl = document.getElementById('qtZoomLabel');
+    if(lbl) lbl.textContent = 'حجم العرض الحالي: ' + Math.round(z*100) + '%';
+  };
+
+})();
+
 </script>
 </body>
 </html>
