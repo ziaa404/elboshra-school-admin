@@ -10248,7 +10248,8 @@ document.getElementById('importStudentsModal')?.addEventListener('click',functio
     }
   });
 
-  document.addEventListener('DOMContentLoaded', function(){
+  // تحديث KPIs بعد Firebase
+  document.addEventListener('firebaseReady', function(){
     cbUpdateKPIs();
   });
 })();
@@ -10261,7 +10262,10 @@ var BACKUP_KEYS = [
   'bs_meetings','bs_notes','bs_counselor_cases','bs_counselor_plan',
   'bs_counselor_scales','bs_honors','bs_moe_logo_v1',
   'counselor_profile_v1','bs_activities','bs_cloudbag_items',
-  'bs_reminders','counselor_students','counselor_cases'
+  'bs_reminders','counselor_students','counselor_cases',
+  'bs_act_templates_v1','guidance_teachers_v1',
+  'guidance_excellent_v1','guidance_weak_v1',
+  'admin_theme','bs_system_settings'
 ];
 
 window.exportBackupJSON = function(){
@@ -11870,10 +11874,8 @@ function deleteActTemplate(i){
   toast('🗑️ تم حذف القالب','info');
 }
 
-// تحميل القوالب عند فتح الصفحة
-document.addEventListener('DOMContentLoaded',()=>{ renderActTemplates(); });
-// أو مباشرة إن كان DOM جاهزاً
-if(document.readyState!=='loading') renderActTemplates();
+// تحميل القوالب بعد Firebase
+document.addEventListener('firebaseReady',()=>{ renderActTemplates(); });
 
 function clearActReport(){
   ['arManzoma','arSchool','arProgram','arExecutor','arParticipants','arPlace',
