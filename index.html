@@ -212,17 +212,41 @@ if('serviceWorker' in navigator){
 
   // ننتظر DOM ثم نحمّل البيانات ونطلق الحدث
   document.addEventListener('DOMContentLoaded', async () => {
-    // إظهار شاشة تحميل
-    const loader = document.getElementById('_fbLoader');
+    const loader    = document.getElementById('_fbLoader');
+    const loaderMsg = document.getElementById('_fbLoaderMsg');
+    const loaderSub = document.getElementById('_fbLoaderSub');
+    const loaderIcon= document.getElementById('_fbLoaderIcon');
+    const retryBtn  = document.getElementById('_fbRetryBtn');
     if (loader) loader.style.display = 'flex';
+    if (window._fbSetStatus) window._fbSetStatus('connecting');
 
-    await preloadAll();
+    // timeout بعد 15 ثانية
+    const timeoutId = setTimeout(() => {
+      if (!window._firebaseReady) {
+        if (loaderIcon) { loaderIcon.style.animation='none'; loaderIcon.textContent='⚠️'; }
+        if (loaderMsg)  loaderMsg.textContent = 'تعذّر الاتصال بقاعدة البيانات';
+        if (loaderSub)  loaderSub.textContent = 'تحقق من اتصالك بالإنترنت ثم أعد المحاولة';
+        if (retryBtn)   retryBtn.style.display = 'inline-block';
+        if (window._fbSetStatus) window._fbSetStatus('error');
+      }
+    }, 15000);
 
-    if (loader) loader.style.display = 'none';
-
-    // نطلق حدث مخصص يخبر الكود أن Firebase جاهز
-    window._firebaseReady = true;
-    document.dispatchEvent(new Event('firebaseReady'));
+    try {
+      await preloadAll();
+      clearTimeout(timeoutId);
+      if (loader) loader.style.display = 'none';
+      if (window._fbSetStatus) window._fbSetStatus('connected');
+      window._firebaseReady = true;
+      document.dispatchEvent(new Event('firebaseReady'));
+    } catch(err) {
+      clearTimeout(timeoutId);
+      console.error('Firebase preload failed:', err);
+      if (loaderIcon) { loaderIcon.style.animation='none'; loaderIcon.textContent='⚠️'; }
+      if (loaderMsg)  loaderMsg.textContent = 'خطأ في الاتصال بـ Firebase';
+      if (loaderSub)  loaderSub.textContent = err.message || 'تحقق من إعدادات Firebase';
+      if (retryBtn)   retryBtn.style.display = 'inline-block';
+      if (window._fbSetStatus) window._fbSetStatus('error');
+    }
   });
 </script>
 <style>
@@ -1855,11 +1879,29 @@ body.dark .topbar {
   align-items:center;justify-content:center;flex-direction:column;gap:18px;
   font-family:'Tajawal',sans-serif;direction:rtl;
 ">
-  <div style="font-size:3rem;animation:fbSpin 1.2s linear infinite;">🔥</div>
-  <div style="color:white;font-size:1.1rem;font-weight:700;">جارٍ الاتصال بقاعدة البيانات...</div>
-  <div style="color:rgba(255,255,255,.55);font-size:.82rem;">يرجى الانتظار</div>
+  <div id="_fbLoaderIcon" style="font-size:3rem;animation:fbSpin 1.2s linear infinite;">🔥</div>
+  <div id="_fbLoaderMsg" style="color:white;font-size:1.1rem;font-weight:700;">جارٍ الاتصال بقاعدة البيانات...</div>
+  <div id="_fbLoaderSub" style="color:rgba(255,255,255,.55);font-size:.82rem;">يرجى الانتظار</div>
+  <button id="_fbRetryBtn" onclick="location.reload()" style="display:none;margin-top:8px;padding:10px 28px;background:#1565c0;color:white;border:none;border-radius:12px;font-family:'Tajawal',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;">🔄 إعادة المحاولة</button>
   <style>@keyframes fbSpin{0%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.2) rotate(10deg)}100%{transform:scale(1) rotate(0deg)}}</style>
 </div>
+
+<!-- 🔥 مؤشر حالة Firebase -->
+<div id="_fbStatus" style="position:fixed;bottom:14px;left:14px;z-index:9999;display:flex;align-items:center;gap:7px;background:rgba(13,27,42,.80);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:5px 13px;font-family:'Tajawal',sans-serif;font-size:.76rem;color:rgba(255,255,255,.80);transition:opacity .5s;opacity:0;pointer-events:none;">
+  <span id="_fbStatusDot" style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;flex-shrink:0;"></span>
+  <span id="_fbStatusText">جارٍ الاتصال...</span>
+</div>
+<script>
+window._fbSetStatus = function(state){
+  var dot=document.getElementById('_fbStatusDot'),txt=document.getElementById('_fbStatusText'),bar=document.getElementById('_fbStatus');
+  if(!dot||!txt||!bar) return;
+  var map={connecting:{c:'#f59e0b',l:'جارٍ الاتصال بـ Firebase...'},connected:{c:'#10b981',l:'🔥 Firebase متصل'},error:{c:'#ef4444',l:'⚠️ خطأ في الاتصال — تحقق من الإنترنت'}};
+  var s=map[state]||map.connecting;
+  dot.style.background=s.c; txt.textContent=s.l; bar.style.opacity='1'; bar.style.pointerEvents='auto';
+  if(state==='connected') setTimeout(function(){bar.style.opacity='0';bar.style.pointerEvents='none';},4000);
+};
+window._fbSetStatus('connecting');
+</script>
 
 <!-- ═══ شاشة الدخول ═══ -->
 <style>
@@ -5121,7 +5163,7 @@ function doLogin(){
 
 <script>
 // ════════════════════════════════════════════════════════════════
-// 🔥 DB — طبقة موحّدة تجمع بين Firebase (أساسي) و localStorage (fallback)
+// 🔥 DB — طبقة Firebase-Only (Firestore)
 //
 //  الاستخدام:
 //    await DB.get('key', defaultValue)   → يجيب البيانات
@@ -5133,19 +5175,17 @@ function doLogin(){
 //  ملاحظة: يعمل synchronously من الكاش الداخلي بعد preloadAll()
 // ════════════════════════════════════════════════════════════════
 const DB = {
-  // كاش محلي (يُملأ من Firebase عند البداية أو من localStorage كـ fallback)
+  // ══════════════════════════════════════════════════
+  // 🔥 Firebase-ONLY Storage Layer
+  //    لا localStorage — كل البيانات على Firestore فقط
+  // ══════════════════════════════════════════════════
   _cache: {},
   _ready: false,
 
-  // قراءة من الكاش (sync بعد التحميل)
+  // قراءة من الكاش فقط (يُملأ من Firestore عند preloadAll)
   get(key, fallback = null) {
     const v = this._cache[key];
     if (v !== undefined) return v;
-    // fallback → localStorage لو Firebase لسه ما جهزش
-    try {
-      const ls = localStorage.getItem(key);
-      if (ls !== null) { this._cache[key] = ls; return ls; }
-    } catch(e) {}
     return fallback;
   },
 
@@ -5155,14 +5195,16 @@ const DB = {
     try { return JSON.parse(v); } catch(e) { return fallback; }
   },
 
-  // حفظ في الكاش + Firebase + localStorage كـ fallback
+  // حفظ في الكاش + Firestore مباشرة (بدون localStorage)
   set(key, value) {
     this._cache[key] = value;
-    // localStorage كـ fallback محلي
-    try { localStorage.setItem(key, value); } catch(e) {}
-    // Firebase async (fire & forget)
+    // Firebase فقط — لا localStorage
     if (window._fsSet) {
       window._fsSet(key, value).catch(e => console.warn('DB.set Firebase error:', key, e));
+    } else {
+      // لو Firebase ما جهزش بعد، نضيفه لقائمة انتظار
+      if (!window._fsPending) window._fsPending = {};
+      window._fsPending[key] = value;
     }
   },
 
@@ -5172,7 +5214,6 @@ const DB = {
 
   remove(key) {
     delete this._cache[key];
-    try { localStorage.removeItem(key); } catch(e) {}
     if (window._fsRemove) window._fsRemove(key);
   },
 
@@ -5180,6 +5221,13 @@ const DB = {
   _loadFromFirebase(cacheObj) {
     Object.assign(this._cache, cacheObj);
     this._ready = true;
+    // صرف أي writes كانت في الانتظار
+    if (window._fsPending && window._fsSet) {
+      Object.entries(window._fsPending).forEach(([k, v]) => {
+        window._fsSet(k, v).catch(e => console.warn('DB pending flush error:', k, e));
+      });
+      window._fsPending = {};
+    }
   }
 };
 
@@ -7164,7 +7212,7 @@ function getStudents() {
   return [...HARDCODED_STUDENTS, ...dynamicExtra];
 }
 function saveStudents(d){
-  // Only save non-hardcoded students to localStorage
+  // Only save non-hardcoded students to Firebase (Firestore)
   const hardcodedIds = new Set(HARDCODED_STUDENTS.map(s=>s.id));
   const toSave = d.filter(s=>!hardcodedIds.has(s.id));
   DB.setJSON(STU_KEY, toSave);
@@ -12753,9 +12801,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
 });
 
 // ════════════════════════════════════════════════════════
-// ① localStorage MEMORY CACHE
-//    بدل ما كل function تقرأ من localStorage مباشرة،
-//    نحفظ في memory ونكتب لـ localStorage مرة واحدة
+// ① FIREBASE MEMORY CACHE (BSCache)
+//    طبقة كاش في الذاكرة فوق DB — لتسريع القراءات
+//    كل البيانات تُخزَّن على Firebase عبر DB.setJSON
 // ════════════════════════════════════════════════════════
 (function(){
   const _cache = {};
@@ -12825,8 +12873,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
     _sv2(name);
     try { DB.set(KEY, name); } catch(e){}
   };
-  // نرجع آخر صفحة عند التحميل (بعد 600ms عشان كل الـ modules تتهيّأ)
-  document.addEventListener('DOMContentLoaded', ()=>{
+  // نرجع آخر صفحة بعد تحميل Firebase (مش DOMContentLoaded)
+  document.addEventListener('firebaseReady', ()=>{
     setTimeout(()=>{
       try{
         const last = DB.get(KEY);
@@ -12836,7 +12884,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
           toast('📌 رجعنا لآخر صفحة: ' + last, 'info');
         }
       }catch(e){}
-    }, 650);
+    }, 400);
   });
 })();
 
@@ -13017,8 +13065,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
     }
   });
 
-  // نعرض تلميح keyboard shortcuts مرة واحدة عند أول تشغيل
-  document.addEventListener('DOMContentLoaded', ()=>{
+  // نعرض تلميح keyboard shortcuts مرة واحدة عند أول تشغيل (بعد Firebase)
+  document.addEventListener('firebaseReady', ()=>{
     setTimeout(()=>{
       try{
         if(!DB.get('bs_shortcuts_hint')){
@@ -13026,7 +13074,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
           DB.set('bs_shortcuts_hint', '1');
         }
       }catch(e){}
-    }, 2000);
+    }, 2500);
   });
 })();
 
