@@ -15,8 +15,7 @@
   import { initializeApp }                        from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { getFirestore, doc, getDoc, setDoc,
            collection, getDocs, deleteDoc }       from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-  import { getStorage, ref, uploadBytesResumable,
-           getDownloadURL, deleteObject }         from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+  // Cloudinary is used for file storage instead of Firebase Storage
 
   // ════════════════════════════════════════════
   // 🔧 ضع هنا بيانات مشروعك من Firebase Console
@@ -34,7 +33,7 @@
 
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
-  const storage = getStorage(app);
+  // storage handled by Cloudinary
 
   // ════════════════════════════════════════════
   // 🗄️  طبقة التخزين الموحّدة (تحل محل localStorage)
@@ -86,24 +85,45 @@
   window._fsRemove = fsRemove;
   window._db       = db;
   window._COLL     = COLL;
-  window._storage  = storage;
+  // window._storage = not used (Cloudinary)
   window._fsCache  = _fsCache;   // ← الإصلاح: نصدّر الكاش عشان DB يقدر يقرأه
 
-  // ── Firebase Storage helpers ──
+  // ── Cloudinary upload helpers ──
   window._storageUpload = function(file, path, onProgress) {
     return new Promise((resolve, reject) => {
-      const storageRef = ref(storage, path);
-      const task = uploadBytesResumable(storageRef, file);
-      task.on('state_changed',
-        snap => { if(onProgress) onProgress(Math.round(snap.bytesTransferred/snap.totalBytes*100)); },
-        reject,
-        () => getDownloadURL(task.snapshot.ref).then(resolve).catch(reject)
-      );
+      var cloudName = 'dbpnfykst';
+      var preset    = 'admin';
+      var url       = 'https://api.cloudinary.com/v1_1/' + cloudName + '/auto/upload';
+      var formData  = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', preset);
+      formData.append('folder', 'cloudbag');
+
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', url, true);
+
+      xhr.upload.onprogress = function(e) {
+        if(e.lengthComputable && onProgress)
+          onProgress(Math.round(e.loaded / e.total * 100));
+      };
+
+      xhr.onload = function() {
+        if(xhr.status === 200) {
+          var res = JSON.parse(xhr.responseText);
+          resolve(res.secure_url);
+        } else {
+          reject(new Error('Cloudinary error: ' + xhr.status + ' ' + xhr.responseText));
+        }
+      };
+
+      xhr.onerror = function() { reject(new Error('Network error')); };
+      xhr.send(formData);
     });
   };
 
   window._storageDelete = function(path) {
-    try { return deleteObject(ref(storage, path)); } catch(e) {}
+    // Cloudinary delete requires server-side — skip silently
+    console.log('Cloudinary: delete skipped for', path);
   };
 
   // ════════════════════════════════════════════
@@ -9570,7 +9590,13 @@ document.getElementById('importStudentsModal')?.addEventListener('click',functio
 
     try {
       var id          = genId();
-      var storagePath = 'cloudbag/' + id + '_' + file.name;
+      // نظّف اسم الملف من المسافات والرموز الخاصة عشان Firebase Storage
+      var safeName    = file.name
+                          .replace(/[^\w\s؀-ۿ\.\-]/g, '')  // نحذف رموز خاصة
+                          .replace(/\s+/g, '_')                        // نحوّل مسافات لـ _
+                          .trim() || ('file_' + Date.now());
+      var ext         = file.name.split('.').pop().toLowerCase();
+      var storagePath = 'cloudbag/' + id + '.' + ext;
 
       var downloadUrl = await window._storageUpload(file, storagePath, function(pct){
         var toasts = document.querySelectorAll('.toast');
@@ -9584,7 +9610,7 @@ document.getElementById('importStudentsModal')?.addEventListener('click',functio
       items.unshift({
         id: id,
         type: isPdf ? 'ملف' : isImg ? 'صورة' : 'مستند',
-        title: file.name,
+        title: file.name,   // نحتفظ بالاسم الأصلي للعرض
         downloadUrl: downloadUrl,
         storagePath: storagePath,
         size: file.size,
